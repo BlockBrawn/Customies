@@ -29,6 +29,7 @@ final class IconProperty implements ItemComponent {
 
 	public function getValue(): array {
 		return [
+            "texture" => $this->default_texture,
 			"textures" => [
 				"default" => $this->default_texture,
 				"dyed" => $this->dyed_texture,

@@ -10,10 +10,12 @@
 		"classmap": ["src"]
 	},
 	"scripts": {
-		"build-phar": [
-			"@composer install --no-dev --classmap-authoritative --ignore-platform-reqs",
-			"php -dphar.readonly=0 vendor/bin/pharynx -i=. -c -p=Customies.phar"
+		"build": [
+			"@php -dphar.readonly=0 ./vendor/bin/pharynx -i . -c -p=Customies.phar"
 		]
+	},
+	"require-dev": {
+		"sof3/pharynx": "dev-master"
 	},
 	"config": {
 		"sort-packages": true,
