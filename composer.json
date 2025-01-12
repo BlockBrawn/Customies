@@ -4,7 +4,7 @@
 	"version": "1.5.0",
 	"type": "library",
 	"license": "MIT",
-	"minimum-stability": "beta",
+	"minimum-stability": "dev",
 	"prefer-stable": true,
 	"autoload": {
 		"classmap": ["src"]
@@ -15,8 +15,15 @@
 		]
 	},
 	"require-dev": {
+		"nethergamesmc/pocketmine-mp": "dev-stable",
 		"sof3/pharynx": "dev-master"
 	},
+	"repositories": [
+		{
+			"type": "vcs",
+			"url": "git@github.com:NetherGamesMC/PocketMine-MP.git"
+		}
+	],
 	"config": {
 		"sort-packages": true,
 		"allow-plugins": {
