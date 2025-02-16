@@ -7,8 +7,7 @@ use customiesdevs\customies\block\CustomiesBlockFactory;
 use customiesdevs\customies\item\CustomiesItemFactory;
 use pocketmine\event\Listener;
 use pocketmine\event\server\DataPacketSendEvent;
-use pocketmine\network\mcpe\protocol\BiomeDefinitionListPacket;
-use pocketmine\network\mcpe\protocol\ItemComponentPacket;
+use pocketmine\network\mcpe\protocol\ItemRegistryPacket;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\ResourcePackStackPacket;
 use pocketmine\network\mcpe\protocol\StartGamePacket;
@@ -16,12 +15,10 @@ use pocketmine\network\mcpe\protocol\types\BlockPaletteEntry;
 use pocketmine\network\mcpe\protocol\types\Experiments;
 use pocketmine\network\mcpe\protocol\types\ItemTypeEntry;
 use function array_merge;
-use function count;
 use function method_exists;
 
 final class CustomiesListener implements Listener {
 
-	private ?ItemComponentPacket $cachedItemComponentPacket = null;
 	/** @var ItemTypeEntry[] */
 	private array $cachedItemTable = [];
 	/** @var BlockPaletteEntry[] */
@@ -38,16 +35,12 @@ final class CustomiesListener implements Listener {
 
 	public function onDataPacketSend(DataPacketSendEvent $event): void {
 		foreach($event->getPackets() as $packet){
-			if($packet instanceof BiomeDefinitionListPacket) {
-				// ItemComponentPacket needs to be sent after the BiomeDefinitionListPacket.
-				if($this->cachedItemComponentPacket === null) {
-					// Wait for the data to be needed before it is actually cached. Allows for all blocks and items to be
-					// registered before they are cached for the rest of the runtime.
-					$this->cachedItemComponentPacket = ItemComponentPacket::create(CustomiesItemFactory::getInstance()->getItemComponentEntries());
-				}
-				foreach($event->getTargets() as $session){
-					$session->sendDataPacket($this->cachedItemComponentPacket);
-				}
+			if($packet instanceof ItemRegistryPacket) {
+				(function() : void{
+					/** @noinspection PhpDynamicFieldDeclarationInspection */
+					/** @noinspection PhpUndefinedFieldInspection */
+					$this->entries = array_merge($this->entries, CustomiesItemFactory::getInstance()->getItemTableEntries());
+				})->call($packet);
 			} elseif($packet instanceof StartGamePacket) {
 				$protocolId = ProtocolInfo::CURRENT_PROTOCOL;
 				foreach($event->getTargets() as $session){
@@ -56,13 +49,7 @@ final class CustomiesListener implements Listener {
 					}
 					break;
 				}
-				if(count($this->cachedItemTable) === 0) {
-					// Wait for the data to be needed before it is actually cached. Allows for all blocks and items to be
-					// registered before they are cached for the rest of the runtime.
-					$this->cachedItemTable = CustomiesItemFactory::getInstance()->getItemTableEntries();
-				}
 				$packet->levelSettings->experiments = $this->experiments;
-				$packet->itemTable = array_merge($packet->itemTable, $this->cachedItemTable);
 				$packet->blockPalette = $this->cachedBlockPalette[$protocolId] ??= CustomiesBlockFactory::getInstance()->getBlockPaletteEntries($protocolId);
 			} elseif($packet instanceof ResourcePackStackPacket) {
 				$packet->experiments = $this->experiments;
