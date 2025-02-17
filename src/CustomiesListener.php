@@ -4,17 +4,14 @@ declare(strict_types=1);
 namespace customiesdevs\customies;
 
 use customiesdevs\customies\block\CustomiesBlockFactory;
-use customiesdevs\customies\item\CustomiesItemFactory;
 use pocketmine\event\Listener;
 use pocketmine\event\server\DataPacketSendEvent;
-use pocketmine\network\mcpe\protocol\ItemRegistryPacket;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\ResourcePackStackPacket;
 use pocketmine\network\mcpe\protocol\StartGamePacket;
 use pocketmine\network\mcpe\protocol\types\BlockPaletteEntry;
 use pocketmine\network\mcpe\protocol\types\Experiments;
 use pocketmine\network\mcpe\protocol\types\ItemTypeEntry;
-use function array_merge;
 use function method_exists;
 
 final class CustomiesListener implements Listener {
@@ -35,13 +32,7 @@ final class CustomiesListener implements Listener {
 
 	public function onDataPacketSend(DataPacketSendEvent $event): void {
 		foreach($event->getPackets() as $packet){
-			if($packet instanceof ItemRegistryPacket) {
-				(function() : void{
-					/** @noinspection PhpDynamicFieldDeclarationInspection */
-					/** @noinspection PhpUndefinedFieldInspection */
-					$this->entries = array_merge($this->entries, CustomiesItemFactory::getInstance()->getItemTableEntries());
-				})->call($packet);
-			} elseif($packet instanceof StartGamePacket) {
+			if($packet instanceof StartGamePacket) {
 				$protocolId = ProtocolInfo::CURRENT_PROTOCOL;
 				foreach($event->getTargets() as $session){
 					if(method_exists($session, "getProtocolId")) {
