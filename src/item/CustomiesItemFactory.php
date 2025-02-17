@@ -14,6 +14,7 @@ use pocketmine\item\ItemTypeIds;
 use pocketmine\item\StringToItemParser;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\network\mcpe\convert\TypeConverter;
+use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\serializer\ItemTypeDictionary;
 use pocketmine\network\mcpe\protocol\types\CacheableNbt;
 use pocketmine\network\mcpe\protocol\types\ItemTypeEntry;
@@ -22,6 +23,7 @@ use pocketmine\utils\Utils;
 use pocketmine\world\format\io\GlobalItemDataHandlers;
 use ReflectionClass;
 use function array_values;
+use function defined;
 
 final class CustomiesItemFactory {
 	use SingletonTrait;
@@ -80,10 +82,9 @@ final class CustomiesItemFactory {
 	 * Registers a custom item ID to the required mappings in the global ItemTypeDictionary instance.
 	 */
 	private function registerCustomItemMapping(string $stringId, int $id): void {
-		if(method_exists(TypeConverter::class, "getAll")){
-			/** @noinspection PhpUndefinedMethodInspection */
-			foreach(TypeConverter::getAll(true) as $typeConverter){
-				$this->registerCustomItemMappingToDictionary($typeConverter->getItemTypeDictionary(), $stringId, $id);
+		if(defined(ProtocolInfo::class . "::ACCEPTED_PROTOCOL")){
+			foreach(ProtocolInfo::ACCEPTED_PROTOCOL as $protocol){
+				$this->registerCustomItemMappingToDictionary(TypeConverter::getInstance($protocol)->getItemTypeDictionary(), $stringId, $id);
 			}
 		}else{
 			$this->registerCustomItemMappingToDictionary(TypeConverter::getInstance()->getItemTypeDictionary(), $stringId, $id);
@@ -114,7 +115,7 @@ final class CustomiesItemFactory {
 		$itemId = $block->getIdInfo()->getBlockTypeId();
 		$this->registerCustomItemMapping($identifier, $itemId);
 		StringToItemParser::getInstance()->registerBlock($identifier, fn() => clone $block);
-		$this->itemTableEntries[] = new ItemTypeEntry($identifier, $itemId, false,  0, new CacheableNbt(new CompoundTag()));
+		$this->itemTableEntries[] = new ItemTypeEntry($identifier, $itemId, false,  2, new CacheableNbt(new CompoundTag()));
 
 		$blockItemIdMap = BlockItemIdMap::getInstance();
 		$reflection = new ReflectionClass($blockItemIdMap);
