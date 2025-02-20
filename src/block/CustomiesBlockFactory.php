@@ -8,6 +8,7 @@ use customiesdevs\customies\block\permutations\Permutable;
 use customiesdevs\customies\block\permutations\Permutation;
 use customiesdevs\customies\block\permutations\Permutations;
 use customiesdevs\customies\item\CreativeInventoryInfo;
+use customiesdevs\customies\item\CreativeItemManager;
 use customiesdevs\customies\item\CustomiesItemFactory;
 use customiesdevs\customies\task\AsyncRegisterBlocksTask;
 use customiesdevs\customies\util\NBT;
@@ -17,15 +18,12 @@ use pocketmine\block\RuntimeBlockStateRegistry;
 use pocketmine\data\bedrock\block\BlockStateData;
 use pocketmine\data\bedrock\block\convert\BlockStateReader;
 use pocketmine\data\bedrock\block\convert\BlockStateWriter;
-use pocketmine\inventory\CreativeCategory;
-use pocketmine\inventory\CreativeInventory;
 use pocketmine\nbt\tag\CompoundTag;
 use pocketmine\nbt\tag\ListTag;
 use pocketmine\network\mcpe\protocol\ProtocolInfo;
 use pocketmine\network\mcpe\protocol\types\BlockPaletteEntry;
 use pocketmine\network\mcpe\protocol\types\CacheableNbt;
 use pocketmine\Server;
-use pocketmine\utils\AssumptionFailedError;
 use pocketmine\utils\SingletonTrait;
 use pocketmine\world\format\io\GlobalBlockStateHandlers;
 use function array_map;
@@ -184,14 +182,23 @@ final class CustomiesBlockFactory {
 		GlobalBlockStateHandlers::getSerializer()->map($block, $serializer);
 		GlobalBlockStateHandlers::getDeserializer()->map($identifier, $deserializer);
 
-		if($creativeInfo !== null && $creativeInfo->getCategory() !== CreativeInventoryInfo::CATEGORY_ALL && $creativeInfo->getCategory() !== CreativeInventoryInfo::CATEGORY_COMMANDS){
-			CreativeInventory::getInstance()->add($block->asItem(), match ($creativeInfo->getCategory()) {
-				CreativeInventoryInfo::CATEGORY_CONSTRUCTION => CreativeCategory::CONSTRUCTION,
-				CreativeInventoryInfo::CATEGORY_ITEMS => CreativeCategory::ITEMS,
-				CreativeInventoryInfo::CATEGORY_NATURE => CreativeCategory::NATURE,
-				CreativeInventoryInfo::CATEGORY_EQUIPMENT => CreativeCategory::EQUIPMENT,
-				default => throw new AssumptionFailedError("Unknown category")
-			}); //todo: creative item group
+		$addToCreative = $creativeInfo !== null;
+
+		$creativeInfo ??= CreativeInventoryInfo::DEFAULT();
+		$components->setTag("minecraft:creative_category", CompoundTag::create()
+			->setString("category", $creativeInfo->getCategory())
+			->setString("group", $creativeInfo->getGroup()));
+		foreach($propertiesProtocol as $protocolId){
+			$propertiesTags[$protocolId]
+				->setTag("components", $components)
+				->setTag("menu_category", CompoundTag::create()
+					->setString("category", $creativeInfo->getCategory() ?? "")
+					->setString("group", $creativeInfo->getGroup() ?? ""))
+				->setInt("molangVersion", 1);
+		}
+
+		if($addToCreative){
+			CreativeItemManager::getInstance()->addBlockItem($block->asItem(), $creativeInfo);
 		}
 
 		foreach($propertiesTags as $protocolId => $propertiesTag){
