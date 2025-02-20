@@ -184,20 +184,7 @@ final class CustomiesBlockFactory {
 		GlobalBlockStateHandlers::getSerializer()->map($block, $serializer);
 		GlobalBlockStateHandlers::getDeserializer()->map($identifier, $deserializer);
 
-		$creativeInfo ??= CreativeInventoryInfo::DEFAULT();
-		$components->setTag("minecraft:creative_category", CompoundTag::create()
-			->setString("category", $creativeInfo->getCategory())
-			->setString("group", $creativeInfo->getGroup()));
-		foreach($propertiesProtocol as $protocolId){
-			$propertiesTags[$protocolId]
-				->setTag("components", $components)
-				->setTag("menu_category", CompoundTag::create()
-					->setString("category", $creativeInfo->getCategory() ?? "")
-					->setString("group", $creativeInfo->getGroup() ?? ""))
-				->setInt("molangVersion", 1);
-		}
-
-		if($creativeInfo->getCategory() !== CreativeInventoryInfo::CATEGORY_ALL){
+		if($creativeInfo !== null && $creativeInfo->getCategory() !== CreativeInventoryInfo::CATEGORY_ALL && $creativeInfo->getCategory() !== CreativeInventoryInfo::CATEGORY_COMMANDS){
 			CreativeInventory::getInstance()->add($block->asItem(), match ($creativeInfo->getCategory()) {
 				CreativeInventoryInfo::CATEGORY_CONSTRUCTION => CreativeCategory::CONSTRUCTION,
 				CreativeInventoryInfo::CATEGORY_ITEMS => CreativeCategory::ITEMS,
